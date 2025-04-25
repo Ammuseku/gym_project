@@ -1,0 +1,703 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Analytics - Gym Optimizer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        transition: all 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15) !important;
+    }
+    .comparison-indicator {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .comparison-indicator.positive {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+    .comparison-indicator.negative {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    .trend-arrow {
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page header with date selector -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h2 mb-1">Analytics Dashboard</h1>
+            <p class="text-muted">Detailed insights into your fitness progress</p>
+        </div>
+        <div class="col-md-4">
+            <form method="get" class="d-flex align-items-center" id="dateRangeForm">
+                <div class="input-group">
+                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date|date:'Y-m-d' }}">
+                    <span class="input-group-text">to</span>
+                    <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date|date:'Y-m-d' }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Summary Cards -->
+    <div class="row mb-4">
+        <!-- Weight Stats -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow-sm h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Weight</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if stats.latest_weight %}
+                                    {{ stats.latest_weight|floatformat:1 }} kg
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                            {% if stats.weight_change %}
+                                <div class="mt-2">
+                                    {% if stats.weight_change < 0 %}
+                                        <span class="comparison-indicator positive">
+                                            <i class="fas fa-arrow-down trend-arrow"></i>{{ stats.weight_change|abs|floatformat:1 }} kg
+                                        </span>
+                                    {% else %}
+                                        <span class="comparison-indicator negative">
+                                            <i class="fas fa-arrow-up trend-arrow"></i>{{ stats.weight_change|floatformat:1 }} kg
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-weight fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body Fat Stats -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow-sm h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Body Fat</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if stats.latest_body_fat %}
+                                    {{ stats.latest_body_fat|floatformat:1 }}%
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                            {% if stats.body_fat_change %}
+                                <div class="mt-2">
+                                    {% if stats.body_fat_change < 0 %}
+                                        <span class="comparison-indicator positive">
+                                            <i class="fas fa-arrow-down trend-arrow"></i>{{ stats.body_fat_change|abs|floatformat:1 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="comparison-indicator negative">
+                                            <i class="fas fa-arrow-up trend-arrow"></i>{{ stats.body_fat_change|floatformat:1 }}%
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Workouts -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow-sm h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Workouts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_workouts|default:0 }}
+                            </div>
+                            <div class="mt-2">
+                                <span class="text-muted small">Period: {{ start_date|date:"M d" }} - {{ end_date|date:"M d" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dumbbell fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Training Time -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow-sm h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Training Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if stats.total_duration %}
+                                    {{ stats.total_duration }} min
+                                {% else %}
+                                    0 min
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <span class="text-muted small">Avg: {{ stats.avg_duration|default:0|floatformat:0 }} min/workout</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Charts -->
+    <div class="row mb-4">
+        <!-- Weight Trends Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Weight Trends</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="weightTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body Fat Trends Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Body Fat % Trends</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="bodyFatTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Charts -->
+    <div class="row mb-4">
+        <!-- Workout Frequency Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Workout Frequency</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="workoutFrequencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workout Duration Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Workout Duration</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="workoutDurationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Body Measurements -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">Body Measurements</h6>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-metric="all">All</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="chest">Chest</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="waist">Waist</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="hips">Hips</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="arms">Arms</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="thighs">Thighs</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="bodyMeasurementsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set chart defaults
+    Chart.defaults.color = '#858796';
+    Chart.defaults.font.family = "'Nunito', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+    // Weight Trend Chart
+    const weightTrendCtx = document.getElementById('weightTrendChart').getContext('2d');
+    const weightTrendData = [
+        {% for item in weight_data %}
+            {
+                x: '{{ item.date|date:"Y-m-d" }}',
+                y: {{ item.value|floatformat:1 }}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const weightTrendChart = new Chart(weightTrendCtx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Weight (kg)',
+                data: weightTrendData,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#4e73df',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM d, yyyy',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    caretSize: 6,
+                    displayColors: false
+                }
+            }
+        }
+    });
+
+    // Body Fat Trend Chart
+    const bodyFatTrendCtx = document.getElementById('bodyFatTrendChart').getContext('2d');
+    const bodyFatTrendData = [
+        {% for item in body_fat_data %}
+            {
+                x: '{{ item.date|date:"Y-m-d" }}',
+                y: {{ item.value|floatformat:1 }}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const bodyFatTrendChart = new Chart(bodyFatTrendCtx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Body Fat %',
+                data: bodyFatTrendData,
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#1cc88a',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM d, yyyy',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    caretSize: 6,
+                    displayColors: false
+                }
+            }
+        }
+    });
+
+    // Workout Frequency Chart
+    const workoutFrequencyCtx = document.getElementById('workoutFrequencyChart').getContext('2d');
+
+    // Group workout data by week
+    const workoutData = [
+        {% for item in workout_data %}
+            {
+                date: '{{ item.date|date:"Y-m-d" }}',
+                duration: {{ item.duration|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Group by week for frequency chart
+    const workoutsByWeek = {};
+    workoutData.forEach(workout => {
+        const date = new Date(workout.date);
+        const weekStart = new Date(date.setDate(date.getDate() - date.getDay())).toISOString().split('T')[0];
+
+        if (!workoutsByWeek[weekStart]) {
+            workoutsByWeek[weekStart] = 0;
+        }
+        workoutsByWeek[weekStart]++;
+    });
+
+    const weekLabels = Object.keys(workoutsByWeek).sort();
+    const weekCounts = weekLabels.map(week => workoutsByWeek[week]);
+
+    const workoutFrequencyChart = new Chart(workoutFrequencyCtx, {
+        type: 'bar',
+        data: {
+            labels: weekLabels.map(week => {
+                const date = new Date(week);
+                return `Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+            }),
+            datasets: [{
+                label: 'Workouts per Week',
+                data: weekCounts,
+                backgroundColor: '#36b9cc',
+                maxBarThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    displayColors: false
+                }
+            }
+        }
+    });
+
+    // Workout Duration Chart
+    const workoutDurationCtx = document.getElementById('workoutDurationChart').getContext('2d');
+
+    const durationData = workoutData.filter(workout => workout.duration).map(workout => ({
+        x: workout.date,
+        y: workout.duration
+    }));
+
+    const workoutDurationChart = new Chart(workoutDurationCtx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Workout Duration (minutes)',
+                data: durationData,
+                borderColor: '#f6c23e',
+                backgroundColor: 'rgba(246, 194, 62, 0.05)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#f6c23e',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM d, yyyy',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    caretSize: 6,
+                    displayColors: false
+                }
+            }
+        }
+    });
+
+    // Body Measurements Chart
+    const bodyMeasurementsCtx = document.getElementById('bodyMeasurementsChart').getContext('2d');
+
+    // Create a placeholder chart - in a real app, you would fetch this data
+    // from an API endpoint based on the selected metrics
+    const measurementsChart = new Chart(bodyMeasurementsCtx, {
+        type: 'line',
+        data: {
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM d, yyyy',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    caretSize: 6
+                }
+            }
+        }
+    });
+
+    // Metric selector buttons
+    document.querySelectorAll('[data-metric]').forEach(button => {
+        button.addEventListener('click', function() {
+            const metric = this.dataset.metric;
+
+            // Update active state
+            this.parentNode.querySelectorAll('.btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            // In a real app, you would fetch the data for the selected metric
+            // and update the chart
+            if (metric === 'all') {
+                fetchBodyMeasurements('all');
+            } else {
+                fetchBodyMeasurements(metric);
+            }
+        });
+    });
+
+    function fetchBodyMeasurements(metricType) {
+        // Simulate API call for body measurements
+        // In a real app, you would fetch this data from your backend
+
+        // For demonstration, let's create some sample data
+        const colorMap = {
+            'chest': '#4e73df',  // Blue
+            'waist': '#1cc88a',  // Green
+            'hips': '#36b9cc',   // Cyan
+            'arms': '#f6c23e',   // Yellow
+            'thighs': '#e74a3b'  // Red
+        };
+
+        // Clear existing datasets
+        measurementsChart.data.datasets = [];
+
+        if (metricType === 'all') {
+            // Add all metrics
+            Object.keys(colorMap).forEach(metric => {
+                addMeasurementDataset(metric, colorMap[metric]);
+            });
+        } else {
+            // Add just the selected metric
+            addMeasurementDataset(metricType, colorMap[metricType]);
+        }
+
+        measurementsChart.update();
+    }
+
+    function addMeasurementDataset(metricType, color) {
+        // This is sample data - in a real app, this would come from your API
+        const today = new Date();
+        const dates = [];
+
+        // Generate dates for last 90 days
+        for (let i = 90; i >= 0; i -= 15) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            dates.push(date.toISOString().split('T')[0]);
+        }
+
+        // Generate random data that shows improvement
+        const startValue = 80 + Math.random() * 20;
+        let currentValue = startValue;
+        const values = [];
+
+        dates.forEach((date, index) => {
+            // Slight decrease for waist, slight increase for others
+            if (metricType === 'waist') {
+                currentValue = startValue - (index * 0.3) + (Math.random() * 0.4 - 0.2);
+            } else {
+                currentValue = startValue + (index * 0.2) + (Math.random() * 0.4 - 0.2);
+            }
+            values.push(currentValue);
+        });
+
+        // Create dataset
+        const dataset = {
+            label: metricType.charAt(0).toUpperCase() + metricType.slice(1) + ' (cm)',
+            data: dates.map((date, i) => ({ x: date, y: values[i] })),
+            borderColor: color,
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            pointBackgroundColor: color,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 3
+        };
+
+        measurementsChart.data.datasets.push(dataset);
+    }
+
+    // Initialize with all measurements
+    fetchBodyMeasurements('all');
+});
+</script>
+{% endblock %}

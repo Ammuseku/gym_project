@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Log Nutrition | Gym Optimizer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ title|default:"Log Daily Nutrition" }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                                    {{ form.date }}
+                                    {% if form.date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.date.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.is_cheat_day.id_for_label }}" class="form-label">Cheat Day</label>
+                                    <div class="form-check form-switch mt-2">
+                                        {{ form.is_cheat_day }}
+                                        <label class="form-check-label" for="{{ form.is_cheat_day.id_for_label }}">
+                                            This is a cheat day
+                                        </label>
+                                    </div>
+                                    {% if form.is_cheat_day.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.is_cheat_day.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Macronutrients</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.calories_consumed.id_for_label }}" class="form-label">Calories</label>
+                                            <div class="input-group">
+                                                {{ form.calories_consumed }}
+                                                <span class="input-group-text">kcal</span>
+                                            </div>
+                                            {% if form.calories_consumed.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.calories_consumed.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.calories_target.value %}
+                                                <div class="form-text">Target: {{ form.calories_target.value }} kcal</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.water_consumed.id_for_label }}" class="form-label">Water</label>
+                                            <div class="input-group">
+                                                {{ form.water_consumed }}
+                                                <span class="input-group-text">L</span>
+                                            </div>
+                                            {% if form.water_consumed.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.water_consumed.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-text">Recommended: 2.5-3.5 L</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.protein_consumed.id_for_label }}" class="form-label">Protein</label>
+                                            <div class="input-group">
+                                                {{ form.protein_consumed }}
+                                                <span class="input-group-text">g</span>
+                                            </div>
+                                            {% if form.protein_consumed.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.protein_consumed.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.protein_target.value %}
+                                                <div class="form-text">Target: {{ form.protein_target.value }} g</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.carbs_consumed.id_for_label }}" class="form-label">Carbohydrates</label>
+                                            <div class="input-group">
+                                                {{ form.carbs_consumed }}
+                                                <span class="input-group-text">g</span>
+                                            </div>
+                                            {% if form.carbs_consumed.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.carbs_consumed.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.carbs_target.value %}
+                                                <div class="form-text">Target: {{ form.carbs_target.value }} g</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.fat_consumed.id_for_label }}" class="form-label">Fat</label>
+                                            <div class="input-group">
+                                                {{ form.fat_consumed }}
+                                                <span class="input-group-text">g</span>
+                                            </div>
+                                            {% if form.fat_consumed.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.fat_consumed.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.fat_target.value %}
+                                                <div class="form-text">Target: {{ form.fat_target.value }} g</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes (optional)</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.notes.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'nutrition' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Nutrition Log</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips for Accurate Logging</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-utensils text-primary me-2"></i> Measure Portions</h6>
+                            <p class="text-muted small">Use a food scale or measuring cups for the most accurate results. Visual estimations can be off by 50% or more.</p>
+                            
+                            <h6><i class="fas fa-chart-pie text-success me-2"></i> Track Macros, Not Just Calories</h6>
+                            <p class="text-muted small">Protein, carbs, and fat all play different roles in your body. Balancing these macros is as important as your total calories.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-tint text-info me-2"></i> Don't Forget Water</h6>
+                            <p class="text-muted small">Proper hydration improves workout performance, helps with recovery, and can prevent overeating.</p>
+                            
+                            <h6><i class="fas fa-calendar-check text-warning me-2"></i> Consistency Matters Most</h6>
+                            <p class="text-muted small">It's better to log consistently, even if not perfectly accurate, than to log sporadically with perfect detail.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            {% if active_plan %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Active Meal Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>{{ active_plan.name }}</h6>
+                        <p class="text-muted small">{{ active_plan.description|truncatechars:100 }}</p>
+                        
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Goal:</span>
+                                <span class="fw-bold">{{ active_plan.get_goal_display }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Daily Calories:</span>
+                                <span class="fw-bold">{{ active_plan.calories_target }} kcal</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Protein:</span>
+                                <span class="fw-bold">{{ active_plan.protein_target }} g</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Carbs:</span>
+                                <span class="fw-bold">{{ active_plan.carbs_target }} g</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Fat:</span>
+                                <span class="fw-bold">{{ active_plan.fat_target }} g</span>
+                            </li>
+                        </ul>
+                        
+                        <div class="d-grid">
+                            <a href="{% url 'meal_plan_detail' active_plan.id %}" class="btn btn-outline-primary">View Full Plan</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Foods</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Frequently logged items to quickly add to your daily log.</p>
+                    
+                    {% if quick_foods %}
+                        <div class="list-group list-group-flush">
+                            {% for food in quick_foods %}
+                                <button type="button" class="list-group-item list-group-item-action quick-food-item" 
+                                        data-calories="{{ food.calories }}"
+                                        data-protein="{{ food.protein }}"
+                                        data-carbs="{{ food.carbs }}"
+                                        data-fat="{{ food.fat }}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">{{ food.name }}</h6>
+                                            <small class="text-muted">{{ food.serving_size }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="fw-bold">{{ food.calories }} kcal</span>
+                                            <small class="d-block text-muted">P: {{ food.protein }}g | C: {{ food.carbs }}g | F: {{ food.fat }}g</small>
+                                        </div>
+                                    </div>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No quick foods available.</p>
+                            <a href="{% url 'food_library' %}" class="btn btn-sm btn-primary">Browse Foods</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Style form elements
+        document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], textarea').forEach(function(el) {
+            el.classList.add('form-control');
+        });
+        
+        document.querySelector('#{{ form.is_cheat_day.id_for_label }}').classList.add('form-check-input');
+        
+        // Set the date field to today by default if it's empty
+        const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+        if (dateInput && !dateInput.value) {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            dateInput.value = formattedDate;
+        }
+        
+        // Quick food functionality
+        document.querySelectorAll('.quick-food-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                // Get current values
+                let currentCalories = parseFloat(document.getElementById('{{ form.calories_consumed.id_for_label }}').value) || 0;
+                let currentProtein = parseFloat(document.getElementById('{{ form.protein_consumed.id_for_label }}').value) || 0;
+                let currentCarbs = parseFloat(document.getElementById('{{ form.carbs_consumed.id_for_label }}').value) || 0;
+                let currentFat = parseFloat(document.getElementById('{{ form.fat_consumed.id_for_label }}').value) || 0;
+                
+                // Add food values
+                const foodCalories = parseFloat(this.dataset.calories) || 0;
+                const foodProtein = parseFloat(this.dataset.protein) || 0;
+                const foodCarbs = parseFloat(this.dataset.carbs) || 0;
+                const foodFat = parseFloat(this.dataset.fat) || 0;
+                
+                // Update form fields
+                document.getElementById('{{ form.calories_consumed.id_for_label }}').value = (currentCalories + foodCalories).toFixed(0);
+                document.getElementById('{{ form.protein_consumed.id_for_label }}').value = (currentProtein + foodProtein).toFixed(1);
+                document.getElementById('{{ form.carbs_consumed.id_for_label }}').value = (currentCarbs + foodCarbs).toFixed(1);
+                document.getElementById('{{ form.fat_consumed.id_for_label }}').value = (currentFat + foodFat).toFixed(1);
+            });
+        });
+    });
+</script>
+{% endblock %}

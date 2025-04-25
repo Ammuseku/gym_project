@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Gym Optimizer - Smart Training Load Management{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-4">Optimize Your Gym Training Load</h1>
+            <p class="lead mb-4">
+                Our intelligent system helps you select the perfect training load based on your goals, fitness level, and progress.
+                Train smarter, not harder!
+            </p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-4 me-md-2">Go to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'account_signup' %}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                    <a href="{% url 'account_login' %}" class="btn btn-outline-secondary btn-lg px-4">Log In</a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row mt-5 py-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Key Features</h2>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-dumbbell fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">Personalized Workouts</h3>
+                    <p class="card-text">Get workout plans tailored to your fitness level, goals, and available equipment.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">Progress Tracking</h3>
+                    <p class="card-text">Track your weights, reps, and body measurements with intuitive visual charts.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">AI Load Optimization</h3>
+                    <p class="card-text">Our AI engine automatically adjusts your training loads based on your progress.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row py-5 bg-light rounded-3 mt-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">How It Works</h2>
+        </div>
+        <div class="col-md-3 mb-4 text-center">
+            <div class="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <span class="h3 text-primary m-0">1</span>
+            </div>
+            <h5>Create Your Profile</h5>
+            <p>Enter your personal details, fitness level, and any injuries or limitations.</p>
+        </div>
+        <div class="col-md-3 mb-4 text-center">
+            <div class="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <span class="h3 text-primary m-0">2</span>
+            </div>
+            <h5>Set Your Goals</h5>
+            <p>Choose your primary fitness goal: strength, muscle gain, weight loss, or endurance.</p>
+        </div>
+        <div class="col-md-3 mb-4 text-center">
+            <div class="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <span class="h3 text-primary m-0">3</span>
+            </div>
+            <h5>Get Your Plan</h5>
+            <p>Receive a personalized workout plan with optimal loads for each exercise.</p>
+        </div>
+        <div class="col-md-3 mb-4 text-center">
+            <div class="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <span class="h3 text-primary m-0">4</span>
+            </div>
+            <h5>Track & Improve</h5>
+            <p>Log your workouts and watch as the system adjusts your plan based on progress.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

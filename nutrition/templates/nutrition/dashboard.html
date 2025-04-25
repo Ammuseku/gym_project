@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Nutrition Dashboard | Gym Optimizer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <!-- Today's Nutrition Overview -->
+            <div class="card h-100 mb-4 mb-lg-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">Today's Calories</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="text-center mb-4">
+                                <h2 class="display-4 mb-0">
+                                    {% if today_log and today_log.calories_consumed %}
+                                        {{ today_log.calories_consumed }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </h2>
+                                <span class="text-muted">/
+                                {% if active_plan %}
+                                    {{ active_plan.calories_target }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                                </span>
+                            </div>
+
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                     style="width: {% if today_log and active_plan %}{{ today_log.get_calories_percentage }}{% else %}0{% endif %}%;"
+                                     aria-valuenow="{% if today_log and active_plan %}{{ today_log.get_calories_percentage }}{% else %}0{% endif %}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="row">
+                                <!-- Protein -->
+                                <div class="col-4 text-center">
+                                    <div class="position-relative mx-auto" style="width: 100px; height: 100px;">
+                                        <div class="progress-circle">
+                                            <div class="progress-circle-fill" style="transform: rotate({% if today_log and active_plan %}{{ today_log.get_protein_percentage|mul:3.6 }}{% else %}0{% endif %}deg);"></div>
+                                        </div>
+                                        <div class="d-flex flex-column align-items-center justify-content-center position-absolute top-0 start-0 end-0 bottom-0">
+                                            <span class="text-primary">Protein</span>
+                                            <span class="fw-bold">
+                                                {% if today_log and today_log.protein_consumed %}
+                                                    {{ today_log.protein_consumed|floatformat:0 }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}g
+                                            </span>
+                                            <span class="text-muted small">/
+                                                {% if active_plan %}
+                                                    {{ active_plan.protein_target }}g
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Carbs -->
+                                <div class="col-4 text-center">
+                                    <div class="position-relative mx-auto" style="width: 100px; height: 100px;">
+                                        <div class="progress-circle">
+                                            <div class="progress-circle-fill" style="transform: rotate({% if today_log and active_plan %}{{ today_log.get_carbs_percentage|mul:3.6 }}{% else %}0{% endif %}deg);"></div>
+                                        </div>
+                                        <div class="d-flex flex-column align-items-center justify-content-center position-absolute top-0 start-0 end-0 bottom-0">
+                                            <span class="text-success">Carbs</span>
+                                            <span class="fw-bold">
+                                                {% if today_log and today_log.carbs_consumed %}
+                                                    {{ today_log.carbs_consumed|floatformat:0 }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}g
+                                            </span>
+                                            <span class="text-muted small">/
+                                                {% if active_plan %}
+                                                    {{ active_plan.carbs_target }}g
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Fat -->
+                                <div class="col-4 text-center">
+                                    <div class="position-relative mx-auto" style="width: 100px; height: 100px;">
+                                        <div class="progress-circle">
+                                            <div class="progress-circle-fill" style="transform: rotate({% if today_log and active_plan %}{{ today_log.get_fat_percentage|mul:3.6 }}{% else %}0{% endif %}deg);"></div>
+                                        </div>
+                                        <div class="d-flex flex-column align-items-center justify-content-center position-absolute top-0 start-0 end-0 bottom-0">
+                                            <span class="text-warning">Fat</span>
+                                            <span class="fw-bold">
+                                                {% if today_log and today_log.fat_consumed %}
+                                                    {{ today_log.fat_consumed|floatformat:0 }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}g
+                                            </span>
+                                            <span class="text-muted small">/
+                                                {% if active_plan %}
+                                                    {{ active_plan.fat_target }}g
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <!-- Water Intake -->
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <div class="icon-circle bg-info text-white mb-3">
+                                        <i class="fas fa-tint"></i>
+                                    </div>
+                                    <h6>Water</h6>
+                                    <h4 class="mb-0">
+                                        {% if today_log and today_log.water_consumed %}
+                                            {{ today_log.water_consumed }}
+                                        {% else %}
+                                            0
+                                        {% endif %}L
+                                    </h4>
+                                    <p class="text-muted small">Target: 2.5L</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calories Burned -->
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <div class="icon-circle bg-danger text-white mb-3">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <h6>Burned</h6>
+                                    <h4 class="mb-0">
+                                        {% if today_workout_log and today_workout_log.calories_burned %}
+                                            {{ today_workout_log.calories_burned }}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-muted small">calories</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Net Calories -->
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <div class="icon-circle bg-success text-white mb-3">
+                                        <i class="fas fa-calculator"></i>
+                                    </div>
+                                    <h6>Net</h6>
+                                    <h4 class="mb-0">
+                                        {% if today_log and today_log.calories_consumed %}
+                                            {% if today_workout_log and today_workout_log.calories_burned %}
+                                                {{ today_log.calories_consumed|sub:today_workout_log.calories_burned }}
+                                            {% else %}
+                                                {{ today_log.calories_consumed }}
+                                            {% endif %}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-muted small">calories</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Today's Meal Plan -->
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Today's Meal Plan</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_plan and today_meals %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">{{ active_plan.name }}</h6>
+                                <a href="{% url 'meal_plan_detail' active_plan.id %}" class="btn btn-sm btn-outline-primary">View Plan</a>
+                            </div>
+
+                            {% for meal in today_meals %}
+                                <div class="card mb-2">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ meal.get_meal_type_display }}</h6>
+                                            <span class="badge bg-light text-dark">{{ meal.get_total_calories }} kcal</span>
+                                        </div>
+
+                                        {% if meal.items.all %}
+                                            <ul class="list-unstyled small mb-0 mt-2">
+                                                {% for item in meal.items.all %}
+                                                    <li class="d-flex justify-content-between">
+                                                        <span>{{ item.food_item.name }} ({{ item.servings }})</span>
+                                                        <span class="text-muted">{{ item.get_calories }}kcal</span>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted small mb-0 mt-2">No foods added yet</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No active meal plan</p>
+                            <a href="{% url 'create_meal_plan' %}" class="btn btn-primary">Create Meal Plan</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Recent Nutrition Logs -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Nutrition Logs</h5>
+                    <a href="{% url 'nutrition_logs' %}" class="btn btn-sm btn-outline-primary">View All Logs</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Calories</th>
+                                        <th>Protein</th>
+                                        <th>Carbs</th>
+                                        <th>Fat</th>
+                                        <th>Water</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_logs %}
+                                        <tr>
+                                            <td>{{ log.date }}</td>
+                                            <td>
+                                                {{ log.calories_consumed|default:0 }}
+                                                {% if log.calories_target %}
+                                                    <span class="text-muted">/ {{ log.calories_target }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ log.protein_consumed|default:0 }}g
+                                                {% if log.protein_target %}
+                                                    <span class="text-muted">/ {{ log.protein_target }}g</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ log.carbs_consumed|default:0 }}g
+                                                {% if log.carbs_target %}
+                                                    <span class="text-muted">/ {{ log.carbs_target }}g</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ log.fat_consumed|default:0 }}g
+                                                {% if log.fat_target %}
+                                                    <span class="text-muted">/ {{ log.fat_target }}g</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ log.water_consumed|default:0 }}L</td>
+                                            <td>
+                                                <a href="{% url 'log_nutrition' %}?date={{ log.date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-3">No nutrition logs yet</p>
+                            <a href="{% url 'log_nutrition' %}" class="btn btn-primary">Log Nutrition</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Food Library Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body py-5">
+                    <div class="icon-circle bg-primary text-white mb-3">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h5>Food Library</h5>
+                    <p class="text-muted">Search and browse foods with complete nutritional information</p>
+                    <a href="{% url 'food_library' %}" class="btn btn-primary">Explore Foods</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Meal Plan Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body py-5">
+                    <div class="icon-circle bg-info text-white mb-3">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h5>AI Meal Plan</h5>
+                    <p class="text-muted">Generate a personalized meal plan based on your goals</p>
+                    <a href="{% url 'generate_ai_meal_plan' %}" class="btn btn-primary">Generate Plan</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nutritional Analysis Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body py-5">
+                    <div class="icon-circle bg-success text-white mb-3">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h5>Nutritional Analysis</h5>
+                    <p class="text-muted">Get detailed analysis of your eating patterns</p>
+                    <a href="{% url 'nutrition_logs' %}" class="btn btn-primary">View Analysis</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-circle {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+
+    .progress-circle-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        clip: rect(0px, 50px, 100px, 0px);
+        background-color: #4e73df;
+        transform-origin: center;
+    }
+
+    .icon-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}

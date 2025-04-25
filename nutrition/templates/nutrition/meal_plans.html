@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Meal Plans - Gym Optimizer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .plan-card {
+        transition: transform 0.3s;
+        height: 100%;
+        overflow: hidden;
+    }
+    .plan-card:hover {
+        transform: translateY(-5px);
+    }
+    .plan-card.active {
+        border-left: 4px solid #4e73df;
+    }
+    .goal-badge.weight_loss {
+        background-color: #e74a3b;
+        color: white;
+    }
+    .goal-badge.maintenance {
+        background-color: #36b9cc;
+        color: white;
+    }
+    .goal-badge.muscle_gain {
+        background-color: #1cc88a;
+        color: white;
+    }
+    .macro-distribution {
+        height: 5px;
+        border-radius: 3px;
+        overflow: hidden;
+        background-color: #eaecf4;
+    }
+    .protein-segment {
+        height: 100%;
+        float: left;
+        background-color: #4e73df;
+    }
+    .carbs-segment {
+        height: 100%;
+        float: left;
+        background-color: #1cc88a;
+    }
+    .fat-segment {
+        height: 100%;
+        float: left;
+        background-color: #f6c23e;
+    }
+    .macros-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    .plan-actions {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+    .card-options-btn {
+        background: transparent;
+        border: none;
+        padding: 0;
+        font-size: 1rem;
+        color: #6c757d;
+        cursor: pointer;
+    }
+    .card-options-btn:hover {
+        color: #4e73df;
+    }
+    .card-options-dropdown {
+        min-width: 8rem;
+    }
+    .active-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.7rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Meal Plans</h1>
+            <p class="text-muted">Create and manage your nutritional strategies</p>
+        </div>
+        <div>
+            <a href="{% url 'generate_ai_meal_plan' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-robot"></i> AI Generate
+            </a>
+            <a href="{% url 'create_meal_plan' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Create Plan
+            </a>
+        </div>
+    </div>
+
+    {% if active_plan %}
+        <!-- Active Plan Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <div class="d-flex align-items-center mb-3">
+                                    <h5 class="mb-0 me-2">
+                                        <i class="fas fa-check-circle text-primary me-2"></i>
+                                        Active Plan: {{ active_plan.name }}
+                                    </h5>
+                                    <span class="badge goal-badge {{ active_plan.goal }}">
+                                        {{ active_plan.get_goal_display }}
+                                    </span>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-light p-2 me-3">
+                                                <i class="fas fa-fire text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="macros-label">Daily Calories</div>
+                                                <div class="fw-bold">{{ active_plan.calories_target }} kcal</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="macros-label mb-1">Macronutrient Distribution</div>
+                                        <div class="macro-distribution mb-1">
+                                            <div class="protein-segment" style="width: {{ active_plan.protein_target|mul:4|div:active_plan.calories_target|mul:100 }}%;"></div>
+                                            <div class="carbs-segment" style="width: {{ active_plan.carbs_target|mul:4|div:active_plan.calories_target|mul:100 }}%;"></div>
+                                            <div class="fat-segment" style="width: {{ active_plan.fat_target|mul:9|div:active_plan.calories_target|mul:100 }}%;"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-primary">Protein: {{ active_plan.protein_target }}g ({{ active_plan.protein_target|mul:4|div:active_plan.calories_target|mul:100|floatformat:0 }}%)</small>
+                                            <small class="text-success">Carbs: {{ active_plan.carbs_target }}g ({{ active_plan.carbs_target|mul:4|div:active_plan.calories_target|mul:100|floatformat:0 }}%)</small>
+                                            <small class="text-warning">Fat: {{ active_plan.fat_target }}g ({{ active_plan.fat_target|mul:9|div:active_plan.calories_target|mul:100|floatformat:0 }}%)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="card-text">{{ active_plan.description|truncatewords:30 }}</p>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-center justify-content-center border-start">
+                                <div>
+                                    <a href="{% url 'meal_plan_detail' active_plan.id %}" class="btn btn-primary w-100 mb-2">
+                                        <i class="fas fa-eye"></i> View Plan
+                                    </a>
+                                    <a href="{% url 'log_nutrition' %}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-utensils"></i> Log Today's Meals
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Meal Plans Grid -->
+    <div class="row">
+        {% if plans %}
+            {% for plan in plans %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card shadow-sm plan-card {% if plan.id in active_plan_ids %}active{% endif %}">
+                        {% if plan.id in active_plan_ids %}
+                            <div class="active-indicator bg-primary text-white">
+                                <i class="fas fa-check-circle"></i> Active
+                            </div>
+                        {% endif %}
+
+                        <div class="plan-actions dropdown">
+                            <button class="card-options-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu card-options-dropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'meal_plan_detail' plan.id %}">
+                                        <i class="fas fa-eye fa-sm fa-fw me-2 text-gray-400"></i> View
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'edit_meal_plan' plan.id %}">
+                                        <i class="fas fa-edit fa-sm fa-fw me-2 text-gray-400"></i> Edit
+                                    </a>
+                                </li>
+                                {% if plan.id not in active_plan_ids %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'activate_meal_plan' plan.id %}">
+                                            <i class="fas fa-check fa-sm fa-fw me-2 text-gray-400"></i> Set as Active
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'delete_meal_plan' plan.id %}">
+                                        <i class="fas fa-trash fa-sm fa-fw me-2 text-danger"></i> Delete
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title">{{ plan.name }}</h5>
+                                <span class="badge goal-badge {{ plan.goal }}">
+                                    {{ plan.get_goal_display }}
+                                </span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="macros-label mb-1">Daily Calories</div>
+                                <h3 class="fw-bold mb-0">{{ plan.calories_target }} kcal</h3>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="macros-label mb-1">Macronutrient Distribution</div>
+                                <div class="macro-distribution mb-1">
+                                    <div class="protein-segment" style="width: {{ plan.protein_target|mul:4|div:plan.calories_target|mul:100 }}%;"></div>
+                                    <div class="carbs-segment" style="width: {{ plan.carbs_target|mul:4|div:plan.calories_target|mul:100 }}%;"></div>
+                                    <div class="fat-segment" style="width: {{ plan.fat_target|mul:9|div:plan.calories_target|mul:100 }}%;"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-primary">{{ plan.protein_target }}g</small>
+                                    <small class="text-success">{{ plan.carbs_target }}g</small>
+                                    <small class="text-warning">{{ plan.fat_target }}g</small>
+                                </div>
+                            </div>
+
+                            <p class="card-text text-muted small">{{ plan.description|truncatewords:15 }}</p>
+
+                            <div class="d-flex action-buttons mt-3">
+                                {% if plan.id in active_plan_ids %}
+                                    <a href="{% url 'meal_plan_detail' plan.id %}" class="btn btn-primary w-100">
+                                        <i class="fas fa-eye"></i> View Plan
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'activate_meal_plan' plan.id %}" class="btn btn-outline-primary me-2">
+                                        <i class="fas fa-check"></i> Activate
+                                    </a>
+                                    <a href="{% url 'meal_plan_detail' plan.id %}" class="btn btn-primary flex-grow-1">
+                                        <i class="fas fa-eye"></i> View Plan
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white text-muted small py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    {% if plan.is_ai_generated %}
+                                        <i class="fas fa-robot me-1"></i> AI Generated
+                                    {% else %}
+                                        <i class="fas fa-user me-1"></i> Custom
+                                    {% endif %}
+                                </span>
+                                <span>{{ plan.created_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h5>No meal plans yet</h5>
+                        <p class="text-muted">Get started by creating your first meal plan</p>
+                        <div class="mt-3">
+                            <a href="{% url 'generate_ai_meal_plan' %}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-robot"></i> Generate with AI
+                            </a>
+                            <a href="{% url 'create_meal_plan' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Create Manually
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

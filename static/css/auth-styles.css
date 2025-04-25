@@ -1,0 +1,117 @@
+/* Authentication Pages Styles */
+
+/* Card styling */
+.auth-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Header styling */
+.auth-header {
+    border-radius: 12px 12px 0 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, #0062cc, #0096ff);
+}
+
+.auth-header h3 {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    opacity: 0.9;
+}
+
+/* Input styling */
+.auth-card .form-floating {
+    margin-bottom: 1.5rem;
+}
+
+.auth-card .form-control {
+    border-radius: 8px;
+    height: 58px;
+    font-size: 1rem;
+    border: 1px solid #e1e1e1;
+    padding: 15px;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.auth-card .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.auth-card .form-label {
+    color: #6c757d;
+}
+
+/* Button styling */
+.auth-card .btn-primary {
+    height: 50px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #0062cc, #0096ff);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.auth-card .btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #0084e9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Footer styling */
+.auth-footer {
+    border-radius: 0 0 12px 12px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.auth-footer a {
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.auth-footer a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Alert styling */
+.auth-card .alert {
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .auth-card {
+        border-radius: 8px;
+    }
+
+    .auth-header {
+        padding: 1.5rem;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .auth-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .auth-footer {
+        border-radius: 0 0 8px 8px;
+        padding: 1rem;
+    }
+}

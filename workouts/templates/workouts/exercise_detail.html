@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ exercise.name }} | Exercise Library | Gym Optimizer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">{{ exercise.name }}</h1>
+            <p class="text-muted">{{ exercise.get_category_display }} • {{ exercise.get_difficulty_display }}</p>
+        </div>
+        <a href="{% url 'exercise_library' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Library
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if exercise.image %}
+                                <img src="{{ exercise.image.url }}" alt="{{ exercise.name }}" class="img-fluid rounded mb-3">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-dumbbell fa-5x text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Details</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 d-flex justify-content-between">
+                                    <span>Muscle Group:</span>
+                                    <span class="fw-bold">{{ exercise.muscle_group.name }}</span>
+                                </li>
+                                <li class="list-group-item px-0 d-flex justify-content-between">
+                                    <span>Secondary Muscles:</span>
+                                    <span class="fw-bold">
+                                        {% if exercise.secondary_muscle_groups.all %}
+                                            {% for muscle in exercise.secondary_muscle_groups.all %}
+                                                {{ muscle.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            None
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                <li class="list-group-item px-0 d-flex justify-content-between">
+                                    <span>Difficulty:</span>
+                                    <span class="fw-bold">{{ exercise.get_difficulty_display }}</span>
+                                </li>
+                                <li class="list-group-item px-0 d-flex justify-content-between">
+                                    <span>Category:</span>
+                                    <span class="fw-bold">{{ exercise.get_category_display }}</span>
+                                </li>
+                                <li class="list-group-item px-0 d-flex justify-content-between">
+                                    <span>Type:</span>
+                                    <span class="fw-bold">{% if exercise.is_compound %}Compound{% else %}Isolation{% endif %}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Description</h5>
+                        <p>{{ exercise.description }}</p>
+                    </div>
+
+                    {% if exercise.equipment_needed %}
+                    <div class="mb-3">
+                        <h5>Equipment Needed</h5>
+                        <p><i class="fas fa-tools me-2"></i>{{ exercise.equipment_needed }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if logs %}
+                    <div class="mb-3">
+                        <h5>Your Stats</h5>
+                        <p>Last used weight: <strong>{{ logs.0.weight }}kg</strong> ({{ logs.0.date|date:"M d, Y" }})</p>
+                        <p>Average weight: <strong>
+                        {% with avg_weight=logs|average_weight %}
+                            {% if avg_weight %}{{ avg_weight|floatformat:1 }}kg{% else %}No data{% endif %}
+                        {% endwith %}
+                        </strong></p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ exercise.instructions }}</p>
+                </div>
+            </div>
+
+            {% if exercise.video_url %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Video Demonstration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ratio ratio-16x9">
+                        <iframe src="{{ exercise.video_url|youtube_embed_url }}" title="{{ exercise.name }} video demonstration" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Add to Workout</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_plans %}
+                        <form action="{% url 'add_exercise_to_plan' exercise.id %}" method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="workout_plan" class="form-label">Select Workout Plan</label>
+                                <select name="workout_plan" id="workout_plan" class="form-select" required>
+                                    <option value="">-- Select Plan --</option>
+                                    {% for plan in user_plans %}
+                                        <option value="{{ plan.id }}">{{ plan.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="day_of_week" class="form-label">Day of Week</label>
+                                <select name="day_of_week" id="day_of_week" class="form-select" required>
+                                    <option value="0">Monday</option>
+                                    <option value="1">Tuesday</option>
+                                    <option value="2">Wednesday</option>
+                                    <option value="3">Thursday</option>
+                                    <option value="4">Friday</option>
+                                    <option value="5">Saturday</option>
+                                    <option value="6">Sunday</option>
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="sets" class="form-label">Sets</label>
+                                        <input type="number" name="sets" id="sets" class="form-control" value="3" min="1" max="10" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="reps" class="form-label">Reps</label>
+                                        <input type="text" name="reps" id="reps" class="form-control" value="8-12" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="rest_time" class="form-label">Rest (sec)</label>
+                                        <input type="number" name="rest_time" id="rest_time" class="form-control" value="60" min="10" max="300" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Add to Workout
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-3">You don't have any active workout plans.</p>
+                            <a href="{% url 'create_plan' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i>Create Workout Plan
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if similar_exercises %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Similar Exercises</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for similar in similar_exercises %}
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ similar.name }}</h6>
+                                        <small class="text-muted">{{ similar.get_difficulty_display }}</small>
+                                    </div>
+                                    <a href="{% url 'exercise_detail' similar.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

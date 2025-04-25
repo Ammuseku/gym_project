@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load custom_filters  %}
+
+{% block title %}Workout Schedule - Gym Optimizer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .week-day-header {
+        border-bottom: 2px solid #e3e6f0;
+        padding-bottom: 0.5rem;
+        text-align: center;
+    }
+    .today .week-day-header {
+        border-bottom-color: #4e73df;
+        color: #4e73df;
+        font-weight: bold;
+    }
+    .day-column {
+        min-height: 150px;
+        border-right: 1px solid #e3e6f0;
+    }
+    .day-column:last-child {
+        border-right: none;
+    }
+    .schedule-item {
+        margin-bottom: 0.75rem;
+        border-radius: 0.25rem;
+        background-color: #f8f9fc;
+        transition: transform 0.2s;
+        position: relative;
+        overflow: hidden;
+        border-left: 3px solid #4e73df;
+    }
+    .schedule-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.15rem 0.3rem rgba(0, 0, 0, 0.1);
+    }
+    .schedule-item.completed {
+        border-left-color: #1cc88a;
+        opacity: 0.8;
+    }
+    .schedule-item.completed::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 5px,
+            rgba(28, 200, 138, 0.05) 5px,
+            rgba(28, 200, 138, 0.05) 10px
+        );
+    }
+    .schedule-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    .plan-sidebar {
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
+    }
+    .exercise-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+        margin-right: 0.2rem;
+        margin-bottom: 0.2rem;
+    }
+    .add-workout-btn {
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+    .day-column:hover .add-workout-btn {
+        opacity: 1;
+    }
+    .month-selector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+    .month-selector button {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+        color: #4e73df;
+        cursor: pointer;
+    }
+    .month-selector h5 {
+        margin: 0 1rem;
+        min-width: 180px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Workout Schedule</h1>
+            <p class="text-muted">Plan and manage your weekly workouts</p>
+        </div>
+        <div>
+            <a href="{% url 'schedule_workout' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Schedule Workout
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Weekly Calendar View -->
+        <div class="col-lg-9 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="month-selector">
+                        <button id="prevWeek"><i class="fas fa-chevron-left"></i></button>
+                        <h5>{{ week_dates.0|date:"F j" }} - {{ week_dates.6|date:"F j, Y" }}</h5>
+                        <button id="nextWeek"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="row">
+                        {% for date in week_dates %}
+                            <div class="col day-column {% if date == today %}today{% endif %}">
+                                <div class="week-day-header">
+                                    <div class="fw-bold">{{ date|date:"D" }}</div>
+                                    <small>{{ date|date:"M j" }}</small>
+                                </div>
+
+                                <div class="day-schedule pt-3">
+                                    {% with day_schedules=schedule_by_day|get_item:date %}
+                                        {% if day_schedules %}
+                                            {% for schedule in day_schedules %}
+                                                <div class="schedule-item p-2 {% if schedule.completed %}completed{% endif %}">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 class="mb-0">{{ schedule.workout_plan.name }}</h6>
+                                                            <div class="schedule-time">
+                                                                {% if schedule.start_time %}
+                                                                    {{ schedule.start_time|time:"g:i A" }}
+                                                                    {% if schedule.end_time %} - {{ schedule.end_time|time:"g:i A" }}{% endif %}
+                                                                {% else %}
+                                                                    All day
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-link p-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                                                <i class="fas fa-ellipsis-v"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                {% if not schedule.completed %}
+                                                                    <li>
+                                                                        <a class="dropdown-item" href="{% url 'log_workout' schedule.id %}">
+                                                                            <i class="fas fa-dumbbell fa-sm fa-fw me-2 text-gray-400"></i> Log Workout
+                                                                        </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <form action="{% url 'mark_workout_completed' schedule.id %}" method="post" class="d-inline">
+                                                                            {% csrf_token %}
+                                                                            <input type="hidden" name="next" value="schedule">
+                                                                            <button type="submit" class="dropdown-item">
+                                                                                <i class="fas fa-check fa-sm fa-fw me-2 text-gray-400"></i> Mark as Completed
+                                                                            </button>
+                                                                        </form>
+                                                                    </li>
+                                                                {% endif %}
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#">
+                                                                        <i class="fas fa-pen fa-sm fa-fw me-2 text-gray-400"></i> Edit
+                                                                    </a>
+                                                                </li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li>
+                                                                    <a class="dropdown-item text-danger" href="#">
+                                                                        <i class="fas fa-trash fa-sm fa-fw me-2 text-danger"></i> Delete
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-2">
+                                                        {% with exercises=schedule.get_exercises %}
+                                                            {% if exercises %}
+                                                                <div class="d-flex flex-wrap">
+                                                                    {% for exercise in exercises|slice:":3" %}
+                                                                        <span class="badge bg-light text-dark exercise-badge">
+                                                                            {{ exercise.exercise.name }}
+                                                                        </span>
+                                                                    {% endfor %}
+                                                                    {% if exercises.count > 3 %}
+                                                                        <span class="badge bg-light text-dark exercise-badge">
+                                                                            +{{ exercises.count|add:"-3" }} more
+                                                                        </span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </div>
+
+                                                    {% if not schedule.completed and date == today %}
+                                                        <div class="mt-2">
+                                                            <a href="{% url 'log_workout' schedule.id %}" class="btn btn-sm btn-primary w-100">
+                                                                <i class="fas fa-dumbbell"></i> Log Workout
+                                                            </a>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="text-center py-3">
+                                                <a href="{% url 'schedule_workout' %}?date={{ date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary add-workout-btn">
+                                                    <i class="fas fa-plus"></i> Add Workout
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Active Plans -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Active Workout Plans</h6>
+                </div>
+                <div class="card-body p-0 plan-sidebar">
+                    {% if active_plans %}
+                        <div class="list-group list-group-flush">
+                            {% for plan in active_plans %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ plan.workout_plan.name }}</h6>
+                                    <p class="mb-1 small text-muted">
+                                        <span class="badge bg-primary">{{ plan.workout_plan.get_goal_display }}</span>
+                                        {{ plan.workout_plan.get_intensity_display }} Intensity
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="small">
+                                            <span class="text-success">{{ plan.get_progress_percentage|floatformat:0 }}% complete</span><br>
+                                            <span class="text-muted">
+                                                Week {{ plan.start_date|timesince:today|slice:":1" }} of {{ plan.workout_plan.duration_weeks }}
+                                            </span>
+                                        </div>
+                                        <a href="{% url 'plan_detail' plan.workout_plan.id %}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No active workout plans</p>
+                            <a href="{% url 'workout_plans' %}" class="btn btn-sm btn-primary mt-2">Find a Plan</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'schedule_workout' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Schedule Workout
+                        </a>
+                        <a href="{% url 'log_workout' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-dumbbell"></i> Log Workout Manually
+                        </a>
+                        <a href="{% url 'workout_plans' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> Browse Workout Plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Week navigation
+    const prevWeekBtn = document.getElementById('prevWeek');
+    const nextWeekBtn = document.getElementById('nextWeek');
+
+    // Get current week start date from the page
+    const currentWeekStart = new Date('{{ week_dates.0|date:"Y-m-d" }}');
+
+    prevWeekBtn.addEventListener('click', function() {
+        // Go to previous week
+        const prevWeekStart = new Date(currentWeekStart);
+        prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+        window.location.href = `{% url 'schedule' %}?week=${formatDate(prevWeekStart)}`;
+    });
+
+    nextWeekBtn.addEventListener('click', function() {
+        // Go to next week
+        const nextWeekStart = new Date(currentWeekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+        window.location.href = `{% url 'schedule' %}?week=${formatDate(nextWeekStart)}`;
+    });
+
+    // Helper function to format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-light sidebar" style="height: calc(100vh - 56px);">
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'workout_plans' %}" class="nav-link {% if 'plan' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-dumbbell me-2"></i> Workout Plans
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'exercise_library' %}" class="nav-link {% if 'exercise' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-running me-2"></i> Exercise Library
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'progress_tracking' %}" class="nav-link {% if 'progress' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-chart-line me-2"></i> Progress Tracking
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'schedule' %}" class="nav-link {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-calendar-alt me-2"></i> Schedule
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'nutrition' %}" class="nav-link {% if 'nutrition' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-utensils me-2"></i> Nutrition
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'analytics' %}" class="nav-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-chart-bar me-2"></i> Analytics
+            </a>
+        </li>
+    </ul>
+    <hr>
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if user.userprofile.avatar %}
+                <img src="{{ user.userprofile.avatar.url }}" alt="Profile picture" width="32" height="32" class="rounded-circle me-2">
+            {% else %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                    {{ user.username|first|upper }}
+                </div>
+            {% endif %}
+            <strong>{{ user.username }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+            <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'account_logout' %}">Sign out</a></li>
+        </ul>
+    </div>
+</div>

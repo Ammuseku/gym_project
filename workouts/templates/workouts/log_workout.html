@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Workout - Gym Optimizer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exercise-card {
+        margin-bottom: 1rem;
+        border-left: 3px solid #4e73df;
+        transition: all 0.2s;
+    }
+    .exercise-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1) !important;
+    }
+    .set-row {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .set-row:last-child {
+        border-bottom: none;
+    }
+    .set-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #f8f9fc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #4e73df;
+    }
+    .muscle-group-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        background-color: #f0f0f0;
+        color: #5a5c69;
+    }
+    .add-set-btn {
+        border: 1px dashed #d1d3e2;
+        background-color: transparent;
+        color: #4e73df;
+        transition: all 0.2s;
+    }
+    .add-set-btn:hover {
+        background-color: #eaecf4;
+    }
+    .difficulty-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(to right, #1cc88a, #f6c23e, #e74a3b);
+        outline: none;
+    }
+    .difficulty-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #4e73df;
+        cursor: pointer;
+        border: 2px solid white;
+    }
+    .difficulty-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #4e73df;
+        cursor: pointer;
+        border: 2px solid white;
+    }
+    .difficulty-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .weight-input {
+        max-width: 80px;
+    }
+    .reps-input {
+        max-width: 60px;
+    }
+    .previous-log {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        background-color: #f8f9fc;
+        border-radius: 0.25rem;
+    }
+    .workout-summary {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Log Workout</h1>
+            <p class="text-muted">{{ schedule.date|date:"l, F j, Y" }}</p>
+        </div>
+        <div>
+            <form action="{% url 'mark_workout_completed' schedule.id %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="schedule">
+                <button type="submit" class="btn btn-outline-success me-2">
+                    <i class="fas fa-check-circle"></i> Mark as Complete
+                </button>
+            </form>
+            <a href="{% url 'schedule' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Workout Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-primary">{{ schedule.workout_plan.name }}</h5>
+                    <span class="badge bg-primary">{{ schedule.get_day_of_week_display }}</span>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% for exercise in exercises %}
+                            <div class="exercise-card card shadow-sm mb-4">
+                                <div class="card-header bg-white py-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-1">{{ exercise.exercise.name }}</h5>
+                                            <div>
+                                                <span class="muscle-group-badge">
+                                                    {{ exercise.exercise.muscle_group.name }}
+                                                </span>
+                                                <span class="badge bg-light text-dark">
+                                                    {{ exercise.sets }} sets × {{ exercise.reps }} reps
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link" data-bs-toggle="collapse"
+                                            data-bs-target="#exercise{{ exercise.id }}Instructions" aria-expanded="false">
+                                            <i class="fas fa-info-circle"></i> Instructions
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="collapse" id="exercise{{ exercise.id }}Instructions">
+                                    <div class="card-body bg-light">
+                                        <p class="mb-0">{{ exercise.exercise.instructions }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <!-- Previous Log Info -->
+                                    {% if exercise.previous_log %}
+                                        <div class="previous-log mb-3">
+                                            <i class="fas fa-history me-1"></i> Last workout:
+                                            <strong>{{ exercise.previous_log.weight }} kg</strong> for
+                                            <strong>{{ exercise.previous_log.completed_sets }} sets × {{ exercise.previous_log.completed_reps }}</strong>
+                                            ({{ exercise.previous_log.date|date:"M d" }})
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Sets Form -->
+                                    {{ exercise.form.non_field_errors }}
+                                    {{ exercise.form.id }}
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Weight Used</label>
+                                        <div class="input-group weight-input">
+                                            {{ exercise.form.weight }}
+                                            <span class="input-group-text">kg</span>
+                                        </div>
+                                        {% if exercise.form.weight.errors %}
+                                            <div class="invalid-feedback d-block">{{ exercise.form.weight.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Sets Completed</label>
+                                        <div class="input-group weight-input">
+                                            {{ exercise.form.completed_sets }}
+                                            <span class="input-group-text">sets</span>
+                                        </div>
+                                        {% if exercise.form.completed_sets.errors %}
+                                            <div class="invalid-feedback d-block">{{ exercise.form.completed_sets.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Reps Completed (comma separated, e.g., "10,8,8")</label>
+                                        {{ exercise.form.completed_reps }}
+                                        {% if exercise.form.completed_reps.errors %}
+                                            <div class="invalid-feedback d-block">{{ exercise.form.completed_reps.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Perceived Difficulty</label>
+                                        {{ exercise.form.perceived_difficulty }}
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="difficulty-label text-success">Easy</span>
+                                            <span class="difficulty-label text-warning">Moderate</span>
+                                            <span class="difficulty-label text-danger">Hard</span>
+                                        </div>
+                                        {% if exercise.form.perceived_difficulty.errors %}
+                                            <div class="invalid-feedback d-block">{{ exercise.form.perceived_difficulty.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Notes</label>
+                                        {{ exercise.form.notes }}
+                                        {% if exercise.form.notes.errors %}
+                                            <div class="invalid-feedback d-block">{{ exercise.form.notes.errors }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-check">
+                                        {{ exercise.form.completed }}
+                                        <label class="form-check-label" for="{{ exercise.form.completed.id_for_label }}">
+                                            Mark as completed
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Save Workout
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workout Summary Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm workout-summary">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary">Workout Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>{{ schedule.workout_plan.name }}</h6>
+                        <p class="text-muted mb-0">{{ schedule.get_day_of_week_display }} Workout</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="mb-2">Exercises</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for exercise in exercises %}
+                                <li class="list-group-item px-0 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>{{ exercise.exercise.name }}</span>
+                                        <span class="badge bg-primary">{{ exercise.sets }} × {{ exercise.reps }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="mb-2">Primary Muscle Groups</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for exercise in exercises %}
+                                <span class="badge bg-light text-dark">{{ exercise.exercise.muscle_group.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h6 class="mb-2">Tips</h6>
+                        <ul class="small text-muted">
+                            <li>Rest {{ schedule.workout_plan.get_intensity_display|lower }} between sets</li>
+                            <li>Focus on correct form rather than heavy weights</li>
+                            <li>Stay hydrated throughout your workout</li>
+                            <li>Log your weights and reps accurately to track progress</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update difficulty labels based on slider value
+    const difficultySliders = document.querySelectorAll('input[type="range"]');
+
+    difficultySliders.forEach(slider => {
+        const updateDifficultyLabel = () => {
+            const value = parseInt(slider.value);
+            let label;
+            let color;
+
+            if (value <= 3) {
+                label = 'Easy';
+                color = '#1cc88a';
+            } else if (value <= 7) {
+                label = 'Moderate';
+                color = '#f6c23e';
+            } else {
+                label = 'Hard';
+                color = '#e74a3b';
+            }
+
+            // Find closest difficulty-value element
+            const parent = slider.closest('.mb-3');
+            const labelElements = parent.querySelectorAll('.difficulty-label');
+
+            // Reset all labels to default color
+            labelElements.forEach(el => {
+                if (el.textContent === 'Easy') el.className = 'difficulty-label text-success';
+                else if (el.textContent === 'Moderate') el.className = 'difficulty-label text-warning';
+                else if (el.textContent === 'Hard') el.className = 'difficulty-label text-danger';
+            });
+
+            // Highlight current label
+            labelElements.forEach(el => {
+                if (el.textContent === label) {
+                    el.style.fontWeight = 'bold';
+                    el.style.textDecoration = 'underline';
+                } else {
+                    el.style.fontWeight = 'normal';
+                    el.style.textDecoration = 'none';
+                }
+            });
+        };
+
+        // Set initial state
+        updateDifficultyLabel();
+
+        // Update on change
+        slider.addEventListener('input', updateDifficultyLabel);
+    });
+
+    // Toggle completed checkbox when "Mark as completed" button is clicked
+    const markCompletedBtn = document.querySelector('button[type="submit"]');
+    if (markCompletedBtn) {
+        markCompletedBtn.addEventListener('click', function(e) {
+            const completedCheckboxes = document.querySelectorAll('input[name$="completed"]');
+
+            // Check if some exercises are not completed
+            const allCompleted = Array.from(completedCheckboxes).every(checkbox => checkbox.checked);
+
+            if (!allCompleted) {
+                if (!confirm('Some exercises are not marked as completed. Do you want to mark all exercises as completed?')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Check all the checkboxes
+                completedCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

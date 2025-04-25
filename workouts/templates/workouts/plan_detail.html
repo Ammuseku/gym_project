@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}{{ plan.name }} - Gym Optimizer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .day-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    .day-card:hover {
+        transform: translateY(-5px);
+    }
+    .day-header {
+        background-color: #4e73df;
+        color: white;
+        border-radius: 0.35rem 0.35rem 0 0;
+    }
+    .exercise-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid #eaecf4;
+        transition: all 0.2s;
+    }
+    .exercise-item:last-child {
+        border-bottom: none;
+    }
+    .exercise-item:hover {
+        background-color: #f8f9fc;
+    }
+    .exercise-header {
+        cursor: pointer;
+    }
+    .exercise-details {
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 1px dashed #eaecf4;
+        font-size: 0.85rem;
+    }
+    .muscle-group-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        background-color: #eaecf4;
+        color: #5a5c69;
+    }
+    .set-rep-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background-color: #4e73df;
+        color: white;
+    }
+    .rest-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        background-color: #f8f9fc;
+        color: #5a5c69;
+    }
+    .plan-header {
+        background-size: cover;
+        background-position: center;
+        padding: 3rem 0;
+        position: relative;
+        color: white;
+    }
+    .plan-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(28, 40, 115, 0.8);
+    }
+    .plan-header-content {
+        position: relative;
+        z-index: 1;
+    }
+    .goal-badge.weight_loss {
+        background-color: #e74a3b;
+        color: white;
+    }
+    .goal-badge.muscle_gain {
+        background-color: #1cc88a;
+        color: white;
+    }
+    .goal-badge.strength {
+        background-color: #f6c23e;
+        color: white;
+    }
+    .goal-badge.endurance {
+        background-color: #36b9cc;
+        color: white;
+    }
+    .goal-badge.general_fitness {
+        background-color: #4e73df;
+        color: white;
+    }
+    .exercise-order {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .stats-box {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: white;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 1rem;
+    }
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background-color: #f8f9fc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4e73df;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Plan Header Section with Gradient Background -->
+<div class="plan-header mb-4" style="background-image: url('/static/img/workout-bg.jpg');">
+    <div class="container-fluid">
+        <div class="plan-header-content">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <h1 class="display-5 mb-0 me-3">{{ plan.name }}</h1>
+                        <span class="badge goal-badge {{ plan.goal }}">{{ plan.get_goal_display }}</span>
+                    </div>
+                    <p class="lead mb-4">{{ plan.description }}</p>
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-fire-alt me-2"></i>
+                            <span>{{ plan.get_intensity_display }} Intensity</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <span>{{ plan.duration_weeks }} Weeks</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-dumbbell me-2"></i>
+                            <span>{{ plan.get_exercise_count }} Exercises</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                    {% if is_following %}
+                        <a href="{% url 'unfollow_plan' plan.id %}" class="btn btn-light me-2">
+                            <i class="fas fa-user-check"></i> Following
+                        </a>
+                        <a href="{% url 'schedule_workout' %}?plan={{ plan.id }}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Schedule Workout
+                        </a>
+                    {% else %}
+                        <a href="{% url 'follow_plan' plan.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> Start This Plan
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-box d-flex align-items-center">
+                <div class="stats-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Weekly Workouts</h6>
+                    <h4 class="mb-0">{{ weekly_workouts|length }} days</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-box d-flex align-items-center">
+                <div class="stats-icon">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Est. Workout Time</h6>
+                    <h4 class="mb-0">45-60 min</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-box d-flex align-items-center">
+                <div class="stats-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">People Following</h6>
+                    <h4 class="mb-0">{{ plan.users.count }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Schedule Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary">Weekly Schedule</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Focus</th>
+                                    <th>Exercises</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day_num, day_name in day_mapping %}
+                                    {% with day_exercises=weekly_workouts|get_item:day_num %}
+                                        <tr {% if not day_exercises %}class="table-light text-muted"{% endif %}>
+                                            <td><strong>{{ day_name }}</strong></td>
+                                            <td>
+                                                {% if day_exercises %}
+                                                    {% with primary_muscle=day_exercises.0.exercise.muscle_group %}
+                                                        {{ primary_muscle.name }}
+                                                    {% endwith %}
+                                                {% else %}
+                                                    Rest Day
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if day_exercises %}
+                                                    {{ day_exercises|length }} exercises
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if day_exercises %}
+                                                    <a href="{% url 'schedule_workout' %}?plan={{ plan.id }}&day={{ day_num }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-calendar-plus"></i> Schedule
+                                                    </a>
+                                                {% else %}
+                                                    <span class="badge bg-light text-dark">Rest & Recover</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Workout Details -->
+    <div class="row">
+        {% for day_num, exercises in weekly_workouts.items %}
+            {% if exercises %}
+                <div class="col-md-6 col-xl-4 mb-4">
+                    <div class="card shadow-sm day-card">
+                        <div class="day-header p-3">
+                            <h5 class="mb-0">{{ exercises.0.get_day_of_week_display }}</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                {% for exercise in exercises %}
+                                    <div class="exercise-item">
+                                        <div class="d-flex align-items-start exercise-header" data-bs-toggle="collapse"
+                                            data-bs-target="#exercise{{ exercise.id }}Details" aria-expanded="false">
+                                            <div class="exercise-order me-2">{{ forloop.counter }}</div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ exercise.exercise.name }}</h6>
+                                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                                    <span class="muscle-group-badge">
+                                                        {{ exercise.exercise.muscle_group.name }}
+                                                    </span>
+                                                    <span class="set-rep-badge">
+                                                        {{ exercise.sets }} × {{ exercise.reps }}
+                                                    </span>
+                                                    <span class="rest-badge">
+                                                        <i class="fas fa-clock"></i> {{ exercise.rest_time }}s rest
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <i class="fas fa-chevron-down text-muted ms-2 mt-1"></i>
+                                        </div>
+
+                                        <div class="collapse" id="exercise{{ exercise.id }}Details">
+                                            <div class="exercise-details">
+                                                <p class="mb-2">{{ exercise.exercise.description }}</p>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span><strong>Equipment:</strong> {{ exercise.exercise.equipment_needed|default:"None" }}</span>
+                                                    <span><strong>Type:</strong> {{ exercise.exercise.get_category_display }}</span>
+                                                </div>
+                                                {% if exercise.notes %}
+                                                    <div class="alert alert-light mb-0 p-2">
+                                                        <strong>Notes:</strong> {{ exercise.notes }}
+                                                    </div>
+                                                {% endif %}
+                                                <div class="mt-2">
+                                                    <a href="{% url 'exercise_detail' exercise.exercise.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-info-circle"></i> Details
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    This workout plan doesn't have any exercises assigned yet.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Plan Instructions Section -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary">Instructions & Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-calendar-alt text-primary me-2"></i> Workout Frequency</h6>
+                            <p>Follow this program {{ weekly_workouts|length }} days per week for {{ plan.duration_weeks }} weeks.
+                               Schedule rest days between intense workout sessions to allow for recovery.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-weight text-primary me-2"></i> Progression</h6>
+                            <p>Aim to increase weights by 5-10% when you can complete all sets and reps with good form.
+                               Log your workouts to track progress over time.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-heartbeat text-primary me-2"></i> Intensity</h6>
+                            <p>For {{ plan.get_intensity_display|lower }} intensity workouts, use weights that
+                               challenge you in the specified rep ranges while maintaining proper form.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-fast-forward text-primary me-2"></i> Tempo</h6>
+                            <p>Lower weights under control (2-3 seconds), pause briefly, then lift (1-2 seconds).
+                               This tempo maximizes muscle tension and growth stimulus.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-utensils text-primary me-2"></i> Nutrition</h6>
+                            <p>Support your {{ plan.get_goal_display|lower }} goal with appropriate nutrition.
+                               Check your meal plans in the nutrition section for specific recommendations.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <h6><i class="fas fa-redo text-primary me-2"></i> After Completion</h6>
+                            <p>After {{ plan.duration_weeks }} weeks, you can repeat the program with increased weights or
+                               try a different plan to prevent plateaus.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            {% if is_following %}
+                <a href="{% url 'schedule_workout' %}?plan={{ plan.id }}" class="btn btn-primary btn-lg me-2">
+                    <i class="fas fa-calendar-plus"></i> Schedule Workout
+                </a>
+                <a href="{% url 'unfollow_plan' plan.id %}" class="btn btn-outline-danger btn-lg">
+                    <i class="fas fa-user-minus"></i> Unfollow Plan
+                </a>
+            {% else %}
+                <a href="{% url 'follow_plan' plan.id %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus-circle"></i> Start This Plan
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scroll to section when clicking on TOC links
+    document.querySelectorAll('.exercise-header').forEach(header => {
+        header.addEventListener('click', function() {
+            // Toggle chevron icon
+            const chevron = this.querySelector('.fa-chevron-down');
+
+            // Check if the collapse is about to be shown or hidden
+            const collapseTarget = document.querySelector(this.getAttribute('data-bs-target'));
+            const isCollapsed = !collapseTarget.classList.contains('show');
+
+            if (isCollapsed) {
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Profile - {{ user.username }} | Gym Optimizer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Your Profile</h1>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="rounded-circle profile-avatar mb-3">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                            <span class="display-4">{{ user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <h3 class="card-title">{{ user.get_full_name }}</h3>
+                    <p class="text-muted">@{{ user.username }}</p>
+                    <p class="mb-0">
+                        <i class="fas fa-envelope me-2"></i> {{ user.email }}
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-user me-2"></i> {{ user.profile.get_fitness_level_display }}
+                    </p>
+                    <p>
+                        <i class="fas fa-bullseye me-2"></i> Goal: {{ user.profile.get_primary_goal_display }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Stats Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Age:</span>
+                        <strong>{% if user.profile.age %}{{ user.profile.age }} years{% else %}Not set{% endif %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Height:</span>
+                        <strong>{% if user.profile.height %}{{ user.profile.height }} cm{% else %}Not set{% endif %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Weight:</span>
+                        <strong>
+                            {% if user_progress.recent_weight %}
+                                {{ user_progress.recent_weight.value }} {{ user.profile.weight_unit }}
+                            {% elif user.profile.weight %}
+                                {{ user.profile.weight }} kg
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>BMI:</span>
+                        <strong>
+                            {% if user.profile.bmi %}
+                                {{ user.profile.bmi }} ({{ user.profile.get_bmi_category }})
+                            {% else %}
+                                Not available
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Body Fat:</span>
+                        <strong>
+                            {% if user_progress.recent_body_fat %}
+                                {{ user_progress.recent_body_fat.value }}%
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workout Stats Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Workout Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Workouts:</span>
+                        <strong>{{ user_progress.workout_count }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Last Workout:</span>
+                        <strong>
+                            {% if user_progress.last_workout %}
+                                {{ user_progress.last_workout.date|date:"M d, Y" }}
+                            {% else %}
+                                No workouts yet
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Edit Profile Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Account Information</h6>
+                                {{ user_form|crispy }}
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Personal Information</h6>
+                                {{ profile_form.avatar|as_crispy_field }}
+                                {{ profile_form.gender|as_crispy_field }}
+                                {{ profile_form.birthdate|as_crispy_field }}
+                                {{ profile_form.height|as_crispy_field }}
+                                {{ profile_form.weight|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Fitness Profile</h6>
+                                {{ profile_form.fitness_level|as_crispy_field }}
+                                {{ profile_form.primary_goal|as_crispy_field }}
+                                {{ profile_form.injuries|as_crispy_field }}
+                                {{ profile_form.medical_conditions|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Preferences</h6>
+                                {{ profile_form.weight_unit|as_crispy_field }}
+                                {{ profile_form.receive_reminders|as_crispy_field }}
+                                {{ profile_form.reminder_time|as_crispy_field }}
+                                {{ profile_form.phone_number|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
