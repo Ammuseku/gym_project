@@ -47,7 +47,7 @@ A complete Django web application for selecting the optimal load for training in
 ### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/Ammuseku/gym_optimizer.git
+git clone https://github.com/Ammuseku/gym_project.git
 cd gym_optimizer
 ```
 
