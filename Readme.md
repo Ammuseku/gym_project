@@ -24,7 +24,6 @@ A complete Django web application for selecting the optimal load for training in
 - Django Templates + Bootstrap (UI)
 - Google OAuth API (authentication)
 - Spoonacular API (nutrition recommendations)
-- OpenAI API (AI-driven workout recommendations)
 - Twilio API (SMS notifications)
 - Chart.js (interactive charts)
 
@@ -48,7 +47,7 @@ A complete Django web application for selecting the optimal load for training in
 ### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/gym_optimizer.git
+git clone https://github.com/Ammuseku/gym_optimizer.git
 cd gym_optimizer
 ```
 
@@ -88,15 +87,8 @@ TWILIO_ACCOUNT_SID=your_twilio_account_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=your_twilio_phone_number
 
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
 # Spoonacular
 SPOONACULAR_API_KEY=your_spoonacular_api_key
-
-# Redis/Celery
-CELERY_BROKER_URL=redis://localhost:6379/0
-```
 
 ### Step 5: Run migrations and create a superuser
 
@@ -105,27 +97,8 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### Step 6: Start Redis (for Celery)
 
-```bash
-# Start Redis server on Windows (if installed via WSL)
-wsl redis-server
-
-# Start Redis server on Unix/macOS
-redis-server
-```
-
-### Step 7: Start Celery worker in a separate terminal
-
-```bash
-# Windows
-celery -A gym_optimizer worker -l info -P gevent
-
-# Unix/macOS
-celery -A gym_optimizer worker -l info
-```
-
-### Step 8: Run the development server
+### Step 5: Run the development server
 
 ```bash
 python manage.py runserver
@@ -162,10 +135,6 @@ Authentication is required for most endpoints and can be handled via:
 1. Register for a Spoonacular API key at https://spoonacular.com/food-api
 2. Add the API key to your `.env` file
 
-### OpenAI API
-
-1. Register for an OpenAI API key at https://openai.com/api/
-2. Add the API key to your `.env` file
 
 ### Twilio API
 
@@ -190,4 +159,4 @@ MIT License
 
 ## Contributors
 
-- Your Name <your.email@example.com>
+- Your Name <muslimovamir42@gmail.com>
