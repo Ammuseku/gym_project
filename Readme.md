@@ -48,7 +48,7 @@ A complete Django web application for selecting the optimal load for training in
 
 ```bash
 git clone https://github.com/Ammuseku/gym_project.git
-cd gym_optimizer
+cd gym_project
 ```
 
 ### Step 2: Create and activate virtual environment
